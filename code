@@ -1,0 +1,159 @@
+const int buttonPin1 = 2, buttonPin2 = 3;    
+int button1_State = 0, button2_State = 0;
+int count_value =0;
+int prestate =0;
+#include <LiquidCrystal.h>
+
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int rs = 12, en = 11, d4 = 10, d5 = 9, d6 = 8, d7 = 7;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+// Data wire is conntec to the Arduino digital pin 4
+#define ONE_WIRE_BUS 5
+
+// Setup a oneWire instance to communicate with any OneWire devices
+OneWire oneWire(ONE_WIRE_BUS);
+
+// Pass our oneWire reference to Dallas Temperature sensor 
+DallasTemperature sensors(&oneWire);
+
+int duration=0;
+long distance=0;
+int firstduration=0;
+long firstdistance=0;
+int secondduration=0;
+long seconddistance=0;
+
+void setup() {
+  // initialize the pushbutton pin as an input:
+  sensors.begin();
+  pinMode(buttonPin1, INPUT_PULLUP);
+  pinMode(buttonPin2, INPUT_PULLUP);
+  pinMode(4, INPUT_PULLUP);
+  pinMode(A0, OUTPUT);
+   pinMode(A1, OUTPUT);
+  lcd.begin(16, 2);
+  Serial.begin(9600);
+  lcd.clear();
+  lcd.setCursor(2, 0);
+  lcd.print("SMART WATER");
+  lcd.setCursor(5, 1);
+  lcd.print("HEATER");
+  digitalWrite(A0, LOW);
+  digitalWrite(A1, HIGH);
+ pinMode(A4,OUTPUT);
+pinMode(A5,INPUT);
+}
+
+void loop() {
+
+  
+  // read the state of the pushbutton value:
+  button1_State = digitalRead(buttonPin1);
+  button2_State = digitalRead(buttonPin2);
+  int m = digitalRead(4);
+  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
+  if (button1_State == LOW && prestate == 0) {
+    count_value++;  
+  
+  Serial.println(count_value);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("SET TEMPERATURE");
+  lcd.setCursor(7, 1);
+  lcd.print(count_value);
+    prestate = 1;
+    delay(100);
+  }
+//decrement
+  else if (button2_State == LOW && prestate == 0) {
+    count_value--;
+  
+  Serial.println(count_value);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("SET TEMPERATURE");
+  lcd.setCursor(7, 1);
+  lcd.print(count_value);
+   prestate = 1;
+    delay(100);
+  } 
+
+else if(m==0)
+
+
+{
+digitalWrite(A4, HIGH);
+   delayMicroseconds(10);
+   digitalWrite(A4, LOW);
+   delayMicroseconds(2);
+   duration= pulseIn(A5,HIGH);
+   delay(100);
+   distance=duration*0.034/2;
+   Serial.println(distance);
+   if(distance==3 || distance==4)
+   {
+
+  digitalWrite(A1, LOW);
+   digitalWrite(A0, LOW);
+
+    while(1)
+  {
+   
+   lcd.clear();
+  
+  lcd.setCursor(11, 1);
+  lcd.print(count_value);
+  sensors.requestTemperatures(); 
+  
+  lcd.setCursor(2, 0);
+  lcd.print("HEATER START");
+  lcd.setCursor(2, 1);
+  lcd.print(sensors.getTempCByIndex(0));
+  delay(500);
+
+  if(sensors.getTempCByIndex(0)>=count_value)
+
+  {
+   
+     digitalWrite(A0, HIGH);
+      digitalWrite(A1, HIGH);
+     //delay(200);
+    }
+else
+{
+  digitalWrite(A0, LOW);
+      digitalWrite(A1, LOW);
+  
+  }
+   
+
+  
+  }
+   }
+
+   else 
+
+   {
+
+    lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("FILL MORE WATER");
+  lcd.setCursor(0, 1);
+  lcd.print(distance);
+    digitalWrite(A1, HIGH);
+   //digitalWrite(A0, LOW);
+    
+    }
+ 
+}
+  
+ else if(button1_State == HIGH && button2_State == HIGH) {
+    prestate = 0;
+  }
+  
+}
